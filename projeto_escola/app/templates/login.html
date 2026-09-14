@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="logo-center" style="display:flex;justify-content:center;">
+  <img src="/static/logo-niteroi.png" alt="Prefeitura de Niterói">
+</div>
+<h1>Bem-vindo(a), Professor!</h1>
+<p class="subtitulo">Controle diário de frequência escolar dos alunos da rede</p>
+
+<form class="login-form" hx-post="/api/auth/login" hx-swap="none"
+      hx-on::after-request="if(!event.detail.successful) alert('Usuário ou senha inválidos.')">
+  <label>Usuário</label>
+  <input type="text" name="username" placeholder="Nome de usuário" required>
+  <label>Senha</label>
+  <input type="password" name="password" placeholder="Senha" required>
+  <button type="submit">Acessar</button>
+</form>
+
+<footer>Secretaria Municipal de Educação de Niterói</footer>
+{% endblock %}
