@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="topo">
+  <a href="/turmas" class="btn-pill">← Voltar</a>
+  <div class="logo-center"><img src="/static/logo-niteroi.png" alt="Prefeitura de Niterói"></div>
+  <a href="/api/auth/logout" class="btn-pill">↪ Sair</a>
+</div>
+
+<h1>Bom dia, {{ usuario.nome }}!</h1>
+<p class="subtitulo">{{ hoje.strftime('%d/%m/%Y') }}</p>
+
+<div class="cartao-tabela">
+  <h2>Chamada do Dia – Turma {{ turma.nome }}</h2>
+  <p class="subtitulo" style="text-align:left;margin-bottom:0;">Marque a presença diretamente na tabela</p>
+
+  <table id="tabela-chamada">
+    <thead>
+      <tr><th>Nome do Aluno</th><th>Matrícula</th><th>Situação</th></tr>
+    </thead>
+    <tbody>
+      {% for frequencia, aluno in linhas %}
+      <tr data-frequencia-id="{{ frequencia.id }}"
+          data-versao="{{ frequencia.versao }}"
+          data-status-selecionado="{{ frequencia.status.value }}">
+        <td>{{ aluno.nome }}</td>
+        <td>{{ aluno.matricula }}</td>
+        <td>
+          <button type="button"
+                  class="btn-situacao {{ 'selecionado' if frequencia.status.value == 'PRESENTE' else '' }}"
+                  onclick="marcar(this, 'PRESENTE')">✓ Presente</button>
+          <button type="button"
+                  class="btn-situacao {{ 'selecionado' if frequencia.status.value == 'FALTA' else '' }}"
+                  onclick="marcar(this, 'FALTA')">✗ Ausente</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="confirmar-container">
+    <button
+      hx-post="/api/frequencias/confirmar"
+      hx-ext="json-enc"
+      hx-vals="js:{lancamentos: coletarLancamentos()}"
+      hx-confirm="Deseja confirmar as alterações de frequência desta turma? Clique em Cancelar para revisar antes."
+      hx-swap="none"
+      hx-on::after-request="onConfirmarResposta(event)"
+      class="btn-confirmar">
+      ✓ Confirmar Frequência
+    </button>
+  </div>
+</div>
+
+<footer>Secretaria Municipal de Educação de Niterói</footer>
+
+<script>
+function marcar(btn, status) {
+  const linha = btn.closest('tr');
+  linha.dataset.statusSelecionado = status;
+  linha.querySelectorAll('.btn-situacao').forEach(b => b.classList.remove('selecionado'));
+  btn.classList.add('selecionado');
+}
+
+function coletarLancamentos() {
+  const linhas = document.querySelectorAll('#tabela-chamada tbody tr[data-frequencia-id]');
+  return Array.from(linhas).map(linha => ({
+    frequencia_id: parseInt(linha.dataset.frequenciaId),
+    versao: parseInt(linha.dataset.versao),
+    status: linha.dataset.statusSelecionado,
+  }));
+}
+
+function onConfirmarResposta(event) {
+  if (event.detail.successful) {
+    alert('Alterações realizadas com sucesso!');
+    window.location.href = '/turmas';
+  } else {
+    alert('Não foi possível salvar: alguns registros foram alterados por outro usuário. A página será recarregada para revisão.');
+    window.location.reload();
+  }
+}
+</script>
+{% endblock %}
